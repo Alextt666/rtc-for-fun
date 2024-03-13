@@ -1,9 +1,11 @@
 const LOCAL_PC = new RTCPeerConnection(); // 发起
 const REMOTE_PC = new RTCPeerConnection(); // 接收
+const openBtn = document.querySelector("#openButton");
+const closeBtn = document.querySelector("#closeButton");
+const remoteVideo = document.getElementById("remoteVideo");
 // 挂载ontrack cb
 REMOTE_PC.ontrack = async (e) => {
   const streamFromRemote = e.streams[0];
-  const remoteVideo = document.getElementById("remoteVideo");
   remoteVideo.srcObject = streamFromRemote;
 };
 // 获取本地流媒体
@@ -40,7 +42,6 @@ REMOTE_PC.onicecandidate = async (event) => {
   }
 };
 
-
 async function _createOffer() {
   LOCAL_PC.createDataChannel("room");
   const SDP = await LOCAL_PC.createOffer();
@@ -58,11 +59,18 @@ async function _createAnswer(offer) {
   await LOCAL_PC.setRemoteDescription(SDP);
 }
 
-async function init(){
+async function establishContect() {
   let strem = await getLocalMedia();
   await playonLocal(strem);
   await addTrackToLocal(strem);
   await _createOffer();
 }
 
-init();
+establishContect();
+
+openBtn.addEventListener('click',()=>{
+  remoteVideo.style.display = 'block';
+})
+closeBtn.addEventListener('click',(e)=>{
+  remoteVideo.style.display = 'none';
+})
