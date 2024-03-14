@@ -8,5 +8,20 @@ async function playonLocal(playDom, stream) {
   playDom.srcObject = stream;
   return;
 }
+// 添加本地pc tack
+async function addTrackToLocal(pc, stream) {
+  stream.getTracks().forEach((track) => {
+    pc.addTrack(track, stream);
+  });
+}
 
-export { getLocalMedia, playonLocal };
+// 创建offer
+
+async function _createOffer(pc) {
+  await pc.createDataChannel("room");
+  const SDP = await pc.createOffer();
+  // local save sdp
+  await pc.setLocalDescription(SDP);
+  return SDP;
+}
+export { getLocalMedia, playonLocal, addTrackToLocal, _createOffer };
