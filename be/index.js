@@ -18,14 +18,25 @@ wss.on("connection", function connection(ws) {
     }
     // 远端加入获取OFFER
     if (parsedMsg.type === "fetch-offer") {
-      const OFFER_SDP = WS_SDP_POOL.get(`${parsedMsg.id}-offer-sdp`);
+      const OFFER_SDP = WS_SDP_POOL.get(`${parsedMsg.target}-offer-sdp`);
+      // 发送OFFER给远端
       ws.send(JSON.stringify({ type: "offer-sdp", SDP: OFFER_SDP }));
+      // 发送REMOTE_ID给发送端
+      const TARGET_WS = WS_POOL.get(parsedMsg.target);
+      console.log(parsedMsg.target)
+      TARGET_WS.send(JSON.stringify({ type: "remote-id", id: parsedMsg.id }));
     }
     // 远端回复ANSWER
     if (parsedMsg.type === "reply-answer") {
       const { id, SDP: ANSWER_SDP } = parsedMsg;
       const TARGET_WS = WS_POOL.get(id);
       TARGET_WS.send(JSON.stringify({ type: "answer-sdp", SDP: ANSWER_SDP }));
+    }
+    // 加入候选池
+    if (parsedMsg.type === "candidate") {
+      const { target: TARGET_ID, candidate: CANDIDATE } = parsedMsg;
+      const TARGET_WS = WS_POOL.get(TARGET_ID);
+      TARGET_WS.send(JSON.stringify({ type: "candidate", candidate: CANDIDATE }))
     }
     // 查看房间
     if (parsedMsg.type === "check-room") {

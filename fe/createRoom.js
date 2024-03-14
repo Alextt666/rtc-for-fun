@@ -12,8 +12,8 @@ const creatRoom = async () => {
   const remoteVideo = document.getElementById("remoteVideo");
   const room = document.querySelector("#room");
   const pc = new RTCPeerConnection();
-  //   const ROOM_ID = Math.floor(Math.random() * 1000);
-  const ROOM_ID = 520;
+  let remote_id;
+  const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   room.textContent = `Room: ${ROOM_ID}`;
   WebSocket.prototype.subscribe = ({ type, data }) => {
     ws.send(JSON.stringify({ type, ...data }));
@@ -34,6 +34,13 @@ const creatRoom = async () => {
     if (type === "answer-sdp") {
       await pc.setRemoteDescription(parsedReply.SDP);
       console.log(pc, "pc-instance");
+    }
+    if (type === "remote-id") {
+      remote_id = parsedReply.id;
+    }
+    if (type === "candidate") {
+      pc.addIceCandidate(parsedReply.candidate);
+      room.textContent = "hi";
     }
   });
 
