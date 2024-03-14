@@ -15,8 +15,8 @@ async function addTrackToLocal(pc, stream) {
   });
 }
 
-// 创建offer
 
+// 创建offer
 async function _createOffer(pc) {
   await pc.createDataChannel("room");
   const SDP = await pc.createOffer();
@@ -24,4 +24,22 @@ async function _createOffer(pc) {
   await pc.setLocalDescription(SDP);
   return SDP;
 }
-export { getLocalMedia, playonLocal, addTrackToLocal, _createOffer };
+
+// 创建answer
+async function _createAnswer(pc, offer) {
+  // save offer info
+  await pc.setRemoteDescription(offer);
+  // create answer
+  const SDP = await pc.createAnswer();
+  // local save answer sdp
+  await pc.setLocalDescription(SDP);
+  return SDP;
+}
+
+export {
+  getLocalMedia,
+  playonLocal,
+  addTrackToLocal,
+  _createOffer,
+  _createAnswer,
+};
