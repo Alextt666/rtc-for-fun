@@ -7,7 +7,7 @@ import {
 
 // 发送
 const joinRoom = async () => {
-  const ws = new WebSocket("ws://localhost:2024");
+  const ws = new WebSocket("ws://192.168.1.19:2024");
   const localVideo = document.getElementById("localVideo");
   const remoteVideo = document.getElementById("remoteVideo");
   const joinIpt = document.querySelector("#join-ipt");
@@ -30,13 +30,10 @@ const joinRoom = async () => {
   pc.onicecandidate = async (event) => {
     const iceCandidate = event.candidate;
     if (iceCandidate) {
-      // LOCAL - to REMOTE
-      //   REMOTE_PC.addIceCandidate(iceCandidate);
       ws.subscribe({
-        type: "candidate",
+        type: "candidate-remote",
         data: {
           target: ROOM_ID,
-          //   id: REMOTE_ID,
           candidate: iceCandidate,
         },
       });
@@ -50,7 +47,9 @@ const joinRoom = async () => {
     const parsedReply = JSON.parse(e.data);
     if (parsedReply.type === "offer-sdp") {
       const OFFER = parsedReply.SDP;
+      const CANDIDATE = parsedReply.candidate;
       pc.setRemoteDescription(OFFER);
+      pc.addIceCandidate(CANDIDATE);
       const ANSWER = await _createAnswer(pc, OFFER);
       // info-signal-server-with-answer
       ws.subscribe({

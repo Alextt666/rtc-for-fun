@@ -7,7 +7,7 @@ import {
 
 // 发送
 const creatRoom = async () => {
-  const ws = new WebSocket("ws://localhost:2024");
+  const ws = new WebSocket("ws://192.168.1.19:2024");
   const localVideo = document.getElementById("localVideo");
   const remoteVideo = document.getElementById("remoteVideo");
   const room = document.querySelector("#room");
@@ -24,7 +24,19 @@ const creatRoom = async () => {
     const streamFromRemote = e.streams[0];
     remoteVideo.srcObject = streamFromRemote;
   };
-
+  // 加入候选池
+  pc.onicecandidate = async (event) => {
+    const iceCandidate = event.candidate;
+    if (iceCandidate) {
+      ws.subscribe({
+        type: "candidate-call",
+        data: {
+          id: ROOM_ID,
+          candidate: iceCandidate,
+        },
+      });
+    }
+  };
   ws.addEventListener("open", () => {
     ws.subscribe({ type: "init", data: { id: ROOM_ID } });
   });
@@ -33,14 +45,15 @@ const creatRoom = async () => {
     const { type } = parsedReply;
     if (type === "answer-sdp") {
       await pc.setRemoteDescription(parsedReply.SDP);
-      console.log(pc, "pc-instance");
     }
     if (type === "remote-id") {
       remote_id = parsedReply.id;
     }
     if (type === "candidate") {
       pc.addIceCandidate(parsedReply.candidate);
-      room.textContent = "hi";
+    }
+    if (type === "remote-candidate-reply") {
+      pc.addIceCandidate(parsedReply.candidate);
     }
   });
 

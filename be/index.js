@@ -2,6 +2,7 @@ const WebSocket = require("ws");
 const wss = new WebSocket.Server({ port: 2024 });
 const WS_POOL = new Map();
 const WS_SDP_POOL = new Map();
+const WS_CANDIDATE_POOL = new Map();
 
 wss.on("connection", function connection(ws) {
   console.log("connection establish");
@@ -19,12 +20,15 @@ wss.on("connection", function connection(ws) {
     // 远端加入获取OFFER
     if (parsedMsg.type === "fetch-offer") {
       const OFFER_SDP = WS_SDP_POOL.get(`${parsedMsg.target}-offer-sdp`);
+      const CANDIDATE_SDP = WS_CANDIDATE_POOL.get(`${parsedMsg.target}`);
       // 发送OFFER给远端
-      ws.send(JSON.stringify({ type: "offer-sdp", SDP: OFFER_SDP }));
-      // 发送REMOTE_ID给发送端
-      const TARGET_WS = WS_POOL.get(parsedMsg.target);
-      console.log(parsedMsg.target)
-      TARGET_WS.send(JSON.stringify({ type: "remote-id", id: parsedMsg.id }));
+      ws.send(
+        JSON.stringify({
+          type: "offer-sdp",
+          SDP: OFFER_SDP,
+          candidate: CANDIDATE_SDP,
+        })
+      );
     }
     // 远端回复ANSWER
     if (parsedMsg.type === "reply-answer") {
@@ -32,11 +36,18 @@ wss.on("connection", function connection(ws) {
       const TARGET_WS = WS_POOL.get(id);
       TARGET_WS.send(JSON.stringify({ type: "answer-sdp", SDP: ANSWER_SDP }));
     }
-    // 加入候选池
-    if (parsedMsg.type === "candidate") {
+    // 发送加入候选池
+    if (parsedMsg.type === "candidate-call") {
+      const { id: TARGET_ID, candidate: CANDIDATE } = parsedMsg;
+      WS_CANDIDATE_POOL.set(TARGET_ID, CANDIDATE);
+    }
+    // 远端候选池
+    if (parsedMsg.type === "candidate-remote") {
       const { target: TARGET_ID, candidate: CANDIDATE } = parsedMsg;
       const TARGET_WS = WS_POOL.get(TARGET_ID);
-      TARGET_WS.send(JSON.stringify({ type: "candidate", candidate: CANDIDATE }))
+      TARGET_WS.send(
+        JSON.stringify({ type: "remote-candidate-reply", candidate: CANDIDATE })
+      );
     }
     // 查看房间
     if (parsedMsg.type === "check-room") {
