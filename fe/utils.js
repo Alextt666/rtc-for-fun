@@ -12,14 +12,16 @@ async function playonLocal(playDom, stream) {
 async function addTrackToLocal(pc, stream) {
   stream.getTracks().forEach((track) => {
     pc.addTrack(track, stream);
+    console.log('add-local-track-done')
   });
 }
 
 
 // 创建offer
 async function _createOffer(pc) {
-  await pc.createDataChannel("room");
+  // await pc.createDataChannel("room");
   const SDP = await pc.createOffer();
+  console.log(SDP,'create-local-SDP')
   // local save sdp
   await pc.setLocalDescription(SDP);
   return SDP;

@@ -1,5 +1,22 @@
+const fs = require("fs");
+const https = require("https");
 const WebSocket = require("ws");
-const wss = new WebSocket.Server({ port: 2024 });
+const { resolve } = require("path");
+// 加载 SSL 证书
+const server = https.createServer(
+  {
+    cert: fs.readFileSync(resolve(__dirname, "./localhost.crt")), // 你的证书路径
+    key: fs.readFileSync(resolve(__dirname, "./localhost.key")), // 你的私钥路径
+  },
+  (req, res) => {
+    res.end("Hello");
+  }
+);
+// 创建 WebSocket 服务器
+const wss = new WebSocket.Server({ server }, () => {
+  console.log("socket start");
+});
+
 const WS_POOL = new Map();
 const WS_SDP_POOL = new Map();
 const WS_CANDIDATE_POOL = new Map();
@@ -54,4 +71,8 @@ wss.on("connection", function connection(ws) {
       // console.log(WS_POOL.has(parsedMsg.id));
     }
   });
+});
+// 监听指定的端口 2024
+server.listen(2024, function listening() {
+  console.log("Listening on %d", server.address().port);
 });

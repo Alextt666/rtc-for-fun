@@ -7,9 +7,9 @@ import {
 
 // 发送
 const joinRoom = async () => {
-  const ws = new WebSocket("ws://192.168.1.19:2024");
+  const ws = new WebSocket("wss://192.168.1.19:2024");
   const localVideo = document.getElementById("localVideo");
-  const remoteVideo = document.getElementById("remoteVideo");
+ 
   const joinIpt = document.querySelector("#join-ipt");
   const room = document.querySelector("#room");
   const pc = new RTCPeerConnection();
@@ -20,12 +20,14 @@ const joinRoom = async () => {
   WebSocket.prototype.subscribe = ({ type, data }) => {
     ws.send(JSON.stringify({ type, ...data }));
   };
-
   // 挂载ontrack cb
   pc.ontrack = async (e) => {
-    const streamFromRemote = e.streams[0];
+    console.log('join-on-track',e.streams)
+    const remoteVideo = document.getElementById("remoteVideo");
+    const streamFromRemote = await e.streams[0];
     remoteVideo.srcObject = streamFromRemote;
   };
+
   // 加入候选池
   pc.onicecandidate = async (event) => {
     const iceCandidate = event.candidate;
@@ -48,8 +50,10 @@ const joinRoom = async () => {
     if (parsedReply.type === "offer-sdp") {
       const OFFER = parsedReply.SDP;
       const CANDIDATE = parsedReply.candidate;
-      pc.setRemoteDescription(OFFER);
-      pc.addIceCandidate(CANDIDATE);
+
+      await pc.setRemoteDescription(OFFER);
+      await pc.addIceCandidate(CANDIDATE);
+      
       const ANSWER = await _createAnswer(pc, OFFER);
       // info-signal-server-with-answer
       ws.subscribe({

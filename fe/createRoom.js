@@ -7,12 +7,13 @@ import {
 
 // 发送
 const creatRoom = async () => {
-  const ws = new WebSocket("ws://192.168.1.19:2024");
+  const ws = new WebSocket("wss://192.168.1.19:2024");
   const localVideo = document.getElementById("localVideo");
   const remoteVideo = document.getElementById("remoteVideo");
   const room = document.querySelector("#room");
   const pc = new RTCPeerConnection();
   let remote_id;
+  let candi_;
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   room.textContent = `Room: ${ROOM_ID}`;
   WebSocket.prototype.subscribe = ({ type, data }) => {
@@ -21,13 +22,16 @@ const creatRoom = async () => {
 
   // 挂载ontrack cb
   pc.ontrack = async (e) => {
+    console.log("create-on-track", e.streams);
     const streamFromRemote = e.streams[0];
     remoteVideo.srcObject = streamFromRemote;
   };
   // 加入候选池
   pc.onicecandidate = async (event) => {
     const iceCandidate = event.candidate;
-    if (iceCandidate) {
+    if (iceCandidate && !candi_) {
+      candi_ = iceCandidate;
+      console.log(iceCandidate, "fetch-ice-candidate");
       ws.subscribe({
         type: "candidate-call",
         data: {
@@ -37,6 +41,24 @@ const creatRoom = async () => {
       });
     }
   };
+  // 监控ice 状态
+  pc.addEventListener("icegatheringstatechange", (ev) => {
+    switch (pc.iceGatheringState) {
+      case "new":
+        /* gathering is either just starting or has been reset */
+        console.log("new");
+        break;
+      case "gathering":
+        /* gathering has begun or is ongoing */
+        console.log("gathering");
+        break;
+      case "complete":
+        /* gathering has ended */
+        console.log("complete");
+        break;
+    }
+  });
+
   ws.addEventListener("open", () => {
     ws.subscribe({ type: "init", data: { id: ROOM_ID } });
   });
@@ -45,6 +67,7 @@ const creatRoom = async () => {
     const { type } = parsedReply;
     if (type === "answer-sdp") {
       await pc.setRemoteDescription(parsedReply.SDP);
+      console.log('remote-sdp-set-done',parsedReply.SDP)
     }
     if (type === "remote-id") {
       remote_id = parsedReply.id;
