@@ -4,10 +4,10 @@ import {
   addTrackToLocal,
   _createOffer,
 } from "./utils.js";
-
+import { BASE_URL } from "./env/index.js";
 // 发送
 const creatRoom = async () => {
-  const ws = new WebSocket("wss://192.168.1.19:2024");
+  const ws = new WebSocket(`wss://${BASE_URL}`);
   const localVideo = document.getElementById("localVideo");
   const remoteVideo = document.getElementById("remoteVideo");
   const room = document.querySelector("#room");
@@ -17,7 +17,11 @@ const creatRoom = async () => {
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   room.textContent = `Room: ${ROOM_ID}`;
   WebSocket.prototype.subscribe = ({ type, data }) => {
-    ws.send(JSON.stringify({ type, ...data }));
+    try{
+      ws.send(JSON.stringify({ type, ...data }))
+    }catch(e){
+      console.warn(`WS_CONNECT_ERROR -- ${e.message}`)
+    }
   };
 
   // 挂载ontrack cb
@@ -81,10 +85,12 @@ const creatRoom = async () => {
   });
 
   // 获取流媒体信息
-  const stream = await getLocalMedia();
+  const stream = await getLocalMedia({withAudio:true});
+  // 没有音频媒体
+  const streamWithoutAudio = await getLocalMedia({withAudio:false});
   // 本地播放
-  await playonLocal(localVideo, stream);
-  // 添加流到本地track
+  await playonLocal(localVideo, streamWithoutAudio);
+  // 添加流到本地PC - track
   await addTrackToLocal(pc, stream);
   // 创建offer
   const OFFER = await _createOffer(pc);

@@ -4,12 +4,11 @@ import {
   addTrackToLocal,
   _createAnswer,
 } from "./utils.js";
-
+import { BASE_URL } from "./env/index.js";
 // 发送
 const joinRoom = async () => {
-  const ws = new WebSocket("wss://192.168.1.19:2024");
+  const ws = new WebSocket(`wss://${BASE_URL}`);
   const localVideo = document.getElementById("localVideo");
- 
   const joinIpt = document.querySelector("#join-ipt");
   const room = document.querySelector("#room");
   const pc = new RTCPeerConnection();
@@ -22,7 +21,7 @@ const joinRoom = async () => {
   };
   // 挂载ontrack cb
   pc.ontrack = async (e) => {
-    console.log('join-on-track',e.streams)
+    console.log("join-on-track", e.streams);
     const remoteVideo = document.getElementById("remoteVideo");
     const streamFromRemote = await e.streams[0];
     remoteVideo.srcObject = streamFromRemote;
@@ -53,7 +52,7 @@ const joinRoom = async () => {
 
       await pc.setRemoteDescription(OFFER);
       await pc.addIceCandidate(CANDIDATE);
-      
+
       const ANSWER = await _createAnswer(pc, OFFER);
       // info-signal-server-with-answer
       ws.subscribe({
@@ -64,9 +63,11 @@ const joinRoom = async () => {
   });
 
   // 获取流媒体信息
-  const stream = await getLocalMedia();
+  const stream = await getLocalMedia({ withAudio: true });
+  // 没有音频媒体
+  const streamWithoutAudio = await getLocalMedia({ withAudio: false });
   // 本地播放
-  await playonLocal(localVideo, stream);
+  await playonLocal(localVideo, streamWithoutAudio);
   // 添加流到本地track
   await addTrackToLocal(pc, stream);
   // GET OFFER

@@ -1,13 +1,10 @@
 const fs = require("fs");
-const https = require("https");
+// const https = require("https");
+const http = require('http');
 const WebSocket = require("ws");
 const { resolve } = require("path");
 // 加载 SSL 证书
-const server = https.createServer(
-  {
-    cert: fs.readFileSync(resolve(__dirname, "./localhost.crt")), // 你的证书路径
-    key: fs.readFileSync(resolve(__dirname, "./localhost.key")), // 你的私钥路径
-  },
+const server = http.createServer(
   (req, res) => {
     res.end("Hello");
   }
