@@ -27,8 +27,8 @@ module.exports = {
     server: {
       type: "https",
       options: {
-        cert: fs.readFileSync(resolve(__dirname, "./be/localhost.crt")),
-        key: fs.readFileSync(resolve(__dirname, "./be/localhost.key")), // 你的私钥路径
+        cert: fs.readFileSync(resolve(__dirname, "./be/certificate/localhost.crt")),
+        key: fs.readFileSync(resolve(__dirname, "./be/certificate/localhost.key")), // 你的私钥路径
       },
     },
   },

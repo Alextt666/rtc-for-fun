@@ -5,8 +5,8 @@ const { resolve } = require("path");
 // 加载 SSL 证书
 const server = https.createServer(
   {
-    cert: fs.readFileSync(resolve(__dirname, "./localhost.crt")), // 你的证书路径
-    key: fs.readFileSync(resolve(__dirname, "./localhost.key")), // 你的私钥路径
+    cert: fs.readFileSync(resolve(__dirname, "./certificate/localhost.crt")), // 你的证书路径
+    key: fs.readFileSync(resolve(__dirname, "./certificate/localhost.key")), // 你的私钥路径
   },
   (req, res) => {
     res.end("Hello");
