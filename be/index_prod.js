@@ -1,26 +1,6 @@
-const fs = require("fs");
-const https = require("https");
-const http = require("http");
 const WebSocket = require("ws");
-const { resolve } = require("path");
-// https
-// const server = https.createServer(
-//   {
-//     cert: fs.readFileSync(resolve(__dirname, "./certificate/localhost.pem")), // 你的证书路径
-//     key: fs.readFileSync(resolve(__dirname, "./certificate/localhost.key")), // 你的私钥路径
-//   },
-//   (req, res) => {
-//     res.end("Hello");
-//   }
-// );
-
-//  http
-const server = http.createServer((req, res) => {
-  res.end("Hello");
-});
 // 创建 WebSocket 服务器
-const wss = new WebSocket.Server({ server });
-
+const wss = new WebSocket.Server({ port: 2024 });
 const WS_POOL = new Map();
 const WS_SDP_POOL = new Map();
 const WS_CANDIDATE_POOL = new Map();
@@ -75,8 +55,4 @@ wss.on("connection", function connection(ws) {
       // console.log(WS_POOL.has(parsedMsg.id));
     }
   });
-});
-// 监听指定的端口 2024
-server.listen(2024, function listening() {
-  console.log("Listening on %d", server.address().port);
 });

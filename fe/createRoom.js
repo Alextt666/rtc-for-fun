@@ -17,10 +17,10 @@ const creatRoom = async () => {
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   room.textContent = `Room: ${ROOM_ID}`;
   WebSocket.prototype.subscribe = ({ type, data }) => {
-    try{
-      ws.send(JSON.stringify({ type, ...data }))
-    }catch(e){
-      console.warn(`WS_CONNECT_ERROR -- ${e.message}`)
+    try {
+      ws.send(JSON.stringify({ type, ...data }));
+    } catch (e) {
+      console.warn(`WS_CONNECT_ERROR -- ${e.message}`);
     }
   };
 
@@ -63,15 +63,16 @@ const creatRoom = async () => {
     }
   });
 
-  ws.addEventListener("open", () => {
-    ws.subscribe({ type: "init", data: { id: ROOM_ID } });
+  ws.addEventListener("open", async () => {
+    await ws.subscribe({ type: "init", data: { id: ROOM_ID } });
+   
   });
   ws.addEventListener("message", async (e) => {
     const parsedReply = JSON.parse(e.data);
     const { type } = parsedReply;
     if (type === "answer-sdp") {
       await pc.setRemoteDescription(parsedReply.SDP);
-      console.log('remote-sdp-set-done',parsedReply.SDP)
+      console.log("remote-sdp-set-done", parsedReply.SDP);
     }
     if (type === "remote-id") {
       remote_id = parsedReply.id;
@@ -85,20 +86,20 @@ const creatRoom = async () => {
   });
 
   // 获取流媒体信息
-  const stream = await getLocalMedia({withAudio:true});
+  const stream = await getLocalMedia({ withAudio: true });
   // 没有音频媒体
-  const streamWithoutAudio = await getLocalMedia({withAudio:false});
+  const streamWithoutAudio = await getLocalMedia({ withAudio: false });
   // 本地播放
   await playonLocal(localVideo, streamWithoutAudio);
   // 添加流到本地PC - track
   await addTrackToLocal(pc, stream);
-  // 创建offer
-  const OFFER = await _createOffer(pc);
-  // fetch-to-signal-server-with-offer
-  ws.subscribe({
-    type: "switch-answer-with-offer",
-    data: { SDP: OFFER, id: ROOM_ID },
-  });
+ // 创建offer
+ const OFFER = await _createOffer(pc);
+ // fetch-to-signal-server-with-offer
+ ws.subscribe({
+   type: "switch-answer-with-offer",
+   data: { SDP: OFFER, id: ROOM_ID },
+ });
   // ws.subscribe({ type: "check-room", data: { id: ROOM_ID } });
 };
 
