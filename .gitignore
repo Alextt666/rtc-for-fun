@@ -132,4 +132,4 @@ dist
 
 
 fe/build
-log.*
+log.txt
