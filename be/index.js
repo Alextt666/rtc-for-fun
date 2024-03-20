@@ -2,6 +2,8 @@ const fs = require("fs");
 const https = require("https");
 const WebSocket = require("ws");
 const { resolve } = require("path");
+const Log = require("./log.js");
+const A_LOG = new Log();
 // 加载 SSL 证书
 const server = https.createServer(
   {
@@ -21,16 +23,18 @@ const WS_CANDIDATE_POOL = new Map();
 
 wss.on("connection", function connection(ws) {
   console.log("connection establish");
-
+  A_LOG.connect();
   ws.on("message", function message(message) {
     const parsedMsg = JSON.parse(message);
     console.log(`received: ${parsedMsg.type}`);
     if (parsedMsg.type === "init") {
       WS_POOL.set(parsedMsg.id, ws);
+      A_LOG.customer('init-done')
     }
     // 这里可以根据不同的type来处理不同的逻辑
     if (parsedMsg.type === "switch-answer-with-offer") {
       WS_SDP_POOL.set(`${parsedMsg.id}-offer-sdp`, parsedMsg.SDP);
+      A_LOG.customer('set-offer-sdp')
     }
     // 远端加入获取OFFER
     if (parsedMsg.type === "fetch-offer") {
@@ -44,12 +48,14 @@ wss.on("connection", function connection(ws) {
           candidate: CANDIDATE_SDP,
         })
       );
+      A_LOG.customer('send-offer-sdp-to-remote')
     }
     // 远端回复ANSWER
     if (parsedMsg.type === "reply-answer") {
       const { id, SDP: ANSWER_SDP } = parsedMsg;
       const TARGET_WS = WS_POOL.get(id);
       TARGET_WS.send(JSON.stringify({ type: "answer-sdp", SDP: ANSWER_SDP }));
+      A_LOG.customer('answer-reply')
     }
     // 发送加入候选池
     if (parsedMsg.type === "candidate-call") {

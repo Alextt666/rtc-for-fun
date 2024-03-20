@@ -41,8 +41,13 @@ const joinRoom = async () => {
     }
   };
 
-  ws.addEventListener("open", () => {
+  ws.addEventListener("open", async () => {
     ws.subscribe({ type: "init", data: { id: REMOTE_ID } });
+    // GET OFFER
+    await ws.subscribe({
+      type: "fetch-offer",
+      data: { target: ROOM_ID, id: REMOTE_ID },
+    });
   });
   ws.addEventListener("message", async (e) => {
     const parsedReply = JSON.parse(e.data);
@@ -70,11 +75,6 @@ const joinRoom = async () => {
   await playonLocal(localVideo, streamWithoutAudio);
   // 添加流到本地track
   await addTrackToLocal(pc, stream);
-  // GET OFFER
-  await ws.subscribe({
-    type: "fetch-offer",
-    data: { target: ROOM_ID, id: REMOTE_ID },
-  });
 };
 
 export default joinRoom;

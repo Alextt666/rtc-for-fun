@@ -1,20 +1,23 @@
 const WebSocket = require("ws");
-const { handleLog, errorLog } = require("./log.js");
+const Log = require("./log.js");
+
 // 创建 WebSocket 服务器
 const wss = new WebSocket.Server({ port: 2024 });
 const WS_POOL = new Map();
 const WS_SDP_POOL = new Map();
 const WS_CANDIDATE_POOL = new Map();
+const A_LOG = new Log();
 
 wss.on("connection", function connection(ws) {
   console.log("connection establish");
-  handleLog({ type: "connect" });
+  A_LOG.connect();
   ws.on("message", function message(message) {
     try {
       const parsedMsg = JSON.parse(message);
       console.log(`received: ${parsedMsg.type}`);
       if (parsedMsg.type === "init") {
         WS_POOL.set(parsedMsg.id, ws);
+        customer("init-already-set");
       }
       // 这里可以根据不同的type来处理不同的逻辑
       if (parsedMsg.type === "switch-answer-with-offer") {
