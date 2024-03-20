@@ -3,8 +3,8 @@ import {
   playonLocal,
   addTrackToLocal,
   _createOffer,
-} from "./utils.js";
-import { BASE_URL } from "./env/index.js";
+} from "../utils.js";
+import { BASE_URL } from "../env/index.js";
 
 // 发送
 const creatRoom = async () => {

@@ -2,9 +2,8 @@ const fs = require("fs");
 const https = require("https");
 const WebSocket = require("ws");
 const { resolve } = require("path");
-const { typecheck } = require("./utils/typecheck.js");
-const Log = require("./utils/log.js");
-const A_LOG = new Log();
+const { typecheck, A_LOG } = require("./utils/typecheck.js");
+
 // 加载 SSL 证书
 const server = https.createServer(
   {
@@ -22,9 +21,13 @@ wss.on("connection", function connection(ws) {
   console.log("connection establish");
   A_LOG.connect();
   ws.on("message", function message(message) {
-    const parsedMsg = JSON.parse(message);
-    console.log(`received: ${parsedMsg.type}`);
-    typecheck(parsedMsg, ws);
+    try {
+      const parsedMsg = JSON.parse(message);
+      console.log(`received: ${parsedMsg.type}`);
+      typecheck(parsedMsg, ws);
+    } catch (e) {
+      A_LOG.customer("Unhandle-message-can-not-parse-in-json");
+    }
   });
 });
 // 监听指定的端口 2024

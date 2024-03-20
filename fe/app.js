@@ -1,5 +1,5 @@
-import joinRoom from "./joinRoom.js";
-import creatRoom from "./createRoom.js";
+import joinRoom from "./entry/joinRoom.js";
+import creatRoom from "./entry/createRoom.js";
 const createButton = document.querySelector("#createRoom");
 const joinButton = document.querySelector("#joinRoom");
 createButton.addEventListener("click", async () => {
