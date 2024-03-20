@@ -23,10 +23,10 @@ class Log {
   }
   writeLog(state) {
     try {
-      const content = fs.readFileSync(resolve(__dirname, "./log.txt"), "utf8");
-      fs.writeFileSync(resolve(__dirname, "./log.txt"), `${content}\n${state}`);
+      const content = fs.readFileSync(resolve(__dirname, "../log.txt"), "utf8");
+      fs.writeFileSync(resolve(__dirname, "../log.txt"), `${content}\n${state}`);
     } catch {
-      fs.writeFileSync(resolve(__dirname, "./log.txt"), state);
+      fs.writeFileSync(resolve(__dirname, "../log.txt"), state);
     }
   }
 }
