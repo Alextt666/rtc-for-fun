@@ -45,12 +45,18 @@ const joinRoom = async () => {
       // info-signal-server-with-answer
       ws.subscribe({
         type: "reply-answer",
-        data: { id: ROOM_ID, SDP: ANSWER },
+        data: { id: ROOM_ID, SDP: ANSWER, remoteId: REMOTE_ID },
       });
     }
     if (parsedReply.type === "remote-candidate") {
       const CANDIDATE = parsedReply.candidate;
       pc.addIceCandidate(CANDIDATE);
+    }
+    if (parsedReply.type === "candidate-call-done") {
+      console.log(parsedReply.candidates, "candidate-call-done");
+      parsedReply.candidates.forEach((candidate) => {
+        pc.addIceCandidate(candidate);
+      });
     }
   });
 
@@ -95,6 +101,7 @@ const joinRoom = async () => {
       case "complete":
         /* gathering has ended */
         console.log("complete");
+        ws.subscribe({ type: "candidate-remote-done", data: { id: ROOM_ID } });
         break;
     }
   });

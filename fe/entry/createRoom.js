@@ -14,16 +14,16 @@ const creatRoom = async () => {
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   const room = document.querySelector("#room");
   const pc = new RTCPeerConnection({
-    iceServers:[
+    iceServers: [
       {
-        urls:"turn:106.55.93.132:3478",
+        urls: "turn:106.55.93.132:3478",
         credential: "alex",
         username: "123456",
       },
       {
         urls: "stun:106.55.93.132:3478",
       },
-    ]
+    ],
   });
   let remote_id;
   let candi_;
@@ -47,16 +47,20 @@ const creatRoom = async () => {
     const { type } = parsedReply;
     if (type === "answer-sdp") {
       await pc.setRemoteDescription(parsedReply.SDP);
+      remote_id = parsedReply.remoteid;
       console.log("remote-sdp-set-done", parsedReply.SDP);
-    }
-    if (type === "remote-id") {
-      remote_id = parsedReply.id;
     }
     if (type === "candidate") {
       pc.addIceCandidate(parsedReply.candidate);
     }
     if (type === "remote-candidate-reply") {
       pc.addIceCandidate(parsedReply.candidate);
+    }
+    if(type === "candidate-remote-done") {
+      console.log(parsedReply,'candidate-remote-done');
+      parsedReply.candidates.forEach((candidate) => {
+        pc.addIceCandidate(candidate)
+      })
     }
   });
   // 等待open
@@ -99,6 +103,7 @@ const creatRoom = async () => {
       case "complete":
         /* gathering has ended */
         console.log("complete");
+        ws.subscribe({ type: "candidate-call-done", data: { id: remote_id } });
         break;
     }
   });
