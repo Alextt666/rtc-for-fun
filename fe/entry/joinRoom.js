@@ -81,6 +81,23 @@ const joinRoom = async () => {
       });
     }
   };
+  // 监控ice 状态
+  pc.addEventListener("icegatheringstatechange", (ev) => {
+    switch (pc.iceGatheringState) {
+      case "new":
+        /* gathering is either just starting or has been reset */
+        console.log("new");
+        break;
+      case "gathering":
+        /* gathering has begun or is ongoing */
+        console.log("gathering");
+        break;
+      case "complete":
+        /* gathering has ended */
+        console.log("complete");
+        break;
+    }
+  });
 
   // 获取流媒体信息
   const stream = await getLocalMedia({ withAudio: true });
