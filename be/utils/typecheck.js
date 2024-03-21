@@ -39,7 +39,14 @@ function typecheck(parsedMsg, ws) {
     case "candidate-call":
       {
         const { id: TARGET_ID, candidate: CANDIDATE } = parsedMsg;
-        WS_CANDIDATE_POOL.set(TARGET_ID, CANDIDATE);
+        // WS_CANDIDATE_POOL.set(TARGET_ID, CANDIDATE);
+        const TARGET_WS = WS_POOL.get(TARGET_ID);
+        TARGET_WS.send(
+          JSON.stringify({
+            type: "remote-candidate",
+            candidate: CANDIDATE,
+          })
+        );
       }
       break;
     case "candidate-remote":
@@ -55,4 +62,4 @@ function typecheck(parsedMsg, ws) {
   }
 }
 
-module.exports = { typecheck,A_LOG };
+module.exports = { typecheck, A_LOG };

@@ -14,7 +14,7 @@ module.exports = {
   entry: resolve(__dirname, "./fe/app.js"),
   output: {
     path: resolve(__dirname, "./fe/build"),
-    filename: "bundle.[fullhash].js",
+    filename: "bundle.js",
   },
   plugins: [
     new HtmlWebpackPlugin({

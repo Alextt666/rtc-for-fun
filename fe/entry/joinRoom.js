@@ -4,13 +4,25 @@ import {
   addTrackToLocal,
   _createAnswer,
 } from "../utils.js";
+import { iceConfig } from "./iceConfig.js";
 import { BASE_URL } from "../env/index.js";
 // 发送
 const joinRoom = async () => {
   const localVideo = document.getElementById("localVideo");
   const joinIpt = document.querySelector("#join-ipt");
   const room = document.querySelector("#room");
-  const pc = new RTCPeerConnection();
+  const pc = new RTCPeerConnection({
+    iceServers: [
+      {
+        urls: "turn:106.55.93.132:3478",
+        credential: "alex",
+        username: "123456",
+      },
+      {
+        urls: "stun:106.55.93.132:3478",
+      },
+    ],
+  });
   const REMOTE_ID = Math.floor(Math.random() * 1000);
   //  get from input
   const ROOM_ID = joinIpt.value.toString();
@@ -28,17 +40,17 @@ const joinRoom = async () => {
     const parsedReply = JSON.parse(e.data);
     if (parsedReply.type === "offer-sdp") {
       const OFFER = parsedReply.SDP;
-      const CANDIDATE = parsedReply.candidate;
-
       await pc.setRemoteDescription(OFFER);
-      await pc.addIceCandidate(CANDIDATE);
-
       const ANSWER = await _createAnswer(pc, OFFER);
       // info-signal-server-with-answer
       ws.subscribe({
         type: "reply-answer",
         data: { id: ROOM_ID, SDP: ANSWER },
       });
+    }
+    if (parsedReply.type === "remote-candidate") {
+      const CANDIDATE = parsedReply.candidate;
+      pc.addIceCandidate(CANDIDATE);
     }
   });
 
@@ -59,6 +71,7 @@ const joinRoom = async () => {
   pc.onicecandidate = async (event) => {
     const iceCandidate = event.candidate;
     if (iceCandidate) {
+      console.log(iceCandidate, "remote-candidates");
       ws.subscribe({
         type: "candidate-remote",
         data: {

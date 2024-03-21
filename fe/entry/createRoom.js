@@ -5,7 +5,7 @@ import {
   _createOffer,
 } from "../utils.js";
 import { BASE_URL } from "../env/index.js";
-
+import { iceConfig } from "./iceConfig.js";
 // 发送
 const creatRoom = async () => {
   let resolveA;
@@ -13,7 +13,18 @@ const creatRoom = async () => {
   const remoteVideo = document.getElementById("remoteVideo");
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   const room = document.querySelector("#room");
-  const pc = new RTCPeerConnection();
+  const pc = new RTCPeerConnection({
+    iceServers:[
+      {
+        urls:"turn:106.55.93.132:3478",
+        credential: "alex",
+        username: "123456",
+      },
+      {
+        urls: "stun:106.55.93.132:3478",
+      },
+    ]
+  });
   let remote_id;
   let candi_;
   room.textContent = `Room: ${ROOM_ID}`;
@@ -62,7 +73,7 @@ const creatRoom = async () => {
   // 加入候选池
   pc.onicecandidate = (event) => {
     const iceCandidate = event.candidate;
-    if (iceCandidate && !candi_) {
+    if (iceCandidate) {
       candi_ = iceCandidate;
       console.log(iceCandidate, "fetch-ice-candidate");
       ws.subscribe({
