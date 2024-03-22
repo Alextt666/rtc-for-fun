@@ -12,10 +12,10 @@ const joinRoom = async () => {
   const joinIpt = document.querySelector("#join-ipt");
   const localDiaplay = document.querySelector(".video-box-student");
   const remoteDisplay = document.querySelector(".video-box-teacher");
-  const loading = document.querySelector('#loading');
+  const loading = document.querySelector("#loading");
   const localBtn = document.querySelector("#joinRoom");
   localBtn.disabled = true;
-  loading.style.display = 'block';
+  loading.style.display = "block";
   const room = document.querySelector("#room");
   const pc = new RTCPeerConnection({
     iceServers: [
@@ -57,9 +57,9 @@ const joinRoom = async () => {
   });
   ws.addEventListener("message", async (e) => {
     const parsedReply = JSON.parse(e.data);
+    loading.textContent = "Establish connecting...";
     if (parsedReply.type === "offer-sdp") {
       remoteDisplay.style.display = "block";
-      loading.textContent = 'Establish connecting...'
       const OFFER = parsedReply.SDP;
       await pc.setRemoteDescription(OFFER);
       const ANSWER = await _createAnswer(pc, OFFER);
@@ -85,7 +85,7 @@ const joinRoom = async () => {
   pc.ontrack = async (e) => {
     console.log("join-on-track", e.streams);
     localBtn.disabled = false;
-    loading.style.display = 'none';
+    loading.style.display = "none";
     const remoteVideo = document.getElementById("remoteVideo");
     const streamFromRemote = await e.streams[0];
     remoteVideo.srcObject = streamFromRemote;
