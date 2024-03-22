@@ -13,18 +13,7 @@ const creatRoom = async () => {
   const remoteVideo = document.getElementById("remoteVideo");
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   const room = document.querySelector("#room");
-  const pc = new RTCPeerConnection({
-    iceServers: [
-      {
-        urls: "turn:106.55.93.132:3478",
-        credential: "alex",
-        username: "123456",
-      },
-      {
-        urls: "stun:106.55.93.132:3478",
-      },
-    ],
-  });
+  let pc;
   let remote_id;
   let candi_;
   room.textContent = `Room: ${ROOM_ID}`;
@@ -51,61 +40,77 @@ const creatRoom = async () => {
       console.log("remote-sdp-set-done", parsedReply.SDP);
     }
     if (type === "candidate") {
-      pc.addIceCandidate(parsedReply.candidate);
+      const CANDIDATE = parsedReply.candidate;
+      pc.addIceCandidate(CANDIDATE);
+      console.log("remote-candidate", parsedReply);
     }
-    if (type === "remote-candidate-reply") {
-      pc.addIceCandidate(parsedReply.candidate);
-    }
-    if(type === "candidate-remote-done") {
-      console.log(parsedReply,'candidate-remote-done');
-      parsedReply.candidates.forEach((candidate) => {
-        pc.addIceCandidate(candidate)
-      })
+    if (type === "remote-online") {
+      remote_id = parsedReply.remoteid;
+      console.log("online- init- peer");
+      pc = new RTCPeerConnection({
+        iceServers: [
+          {
+            urls: "turn:106.55.93.132:3478",
+            credential: "alex",
+            username: "123456",
+          },
+          {
+            urls: "stun:106.55.93.132:3478",
+          },
+        ],
+      });
+      // 挂载ontrack cb
+      pc.addEventListener("track", (e) => {
+        console.log("create-on-track", e.streams);
+        const streamFromRemote = e.streams[0];
+        remoteVideo.srcObject = streamFromRemote;
+      });
+      // 加入候选池
+      pc.onicecandidate = (event) => {
+        const iceCandidate = event.candidate;
+        if (iceCandidate) {
+          candi_ = iceCandidate;
+          ws.subscribe({
+            type: "candidate-call",
+            data: {
+              target: remote_id,
+              candidate: iceCandidate,
+            },
+          });
+        }
+      };
+      // 监控ice 状态
+      pc.addEventListener("icegatheringstatechange", (ev) => {
+        switch (pc.iceGatheringState) {
+          case "new":
+            /* gathering is either just starting or has been reset */
+            console.log("new");
+            break;
+          case "gathering":
+            /* gathering has begun or is ongoing */
+            console.log("gathering");
+            break;
+          case "complete":
+            /* gathering has ended */
+            console.log("complete");
+            break;
+        }
+      });
+      // 添加流到本地PC - track
+      await addTrackToLocal(pc, stream);
+      // 创建offer
+      const OFFER = await _createOffer(pc);
+      // fetch-to-signal-server-with-offer
+      ws.subscribe({
+        type: "switch-answer-with-offer",
+        data: { SDP: OFFER, id: ROOM_ID, target: remote_id },
+      });
+      console.log("remote-online-send-sdp-message");
     }
   });
   // 等待open
   await new Promise((resolve, reject) => {
     resolveA = resolve;
-  });
-
-  // 挂载ontrack cb
-  pc.ontrack = async (e) => {
-    console.log("create-on-track", e.streams);
-    const streamFromRemote = e.streams[0];
-    remoteVideo.srcObject = streamFromRemote;
-  };
-  // 加入候选池
-  pc.onicecandidate = (event) => {
-    const iceCandidate = event.candidate;
-    if (iceCandidate) {
-      candi_ = iceCandidate;
-      console.log(iceCandidate, "fetch-ice-candidate");
-      ws.subscribe({
-        type: "candidate-call",
-        data: {
-          id: ROOM_ID,
-          candidate: iceCandidate,
-        },
-      });
-    }
-  };
-  // 监控ice 状态
-  pc.addEventListener("icegatheringstatechange", (ev) => {
-    switch (pc.iceGatheringState) {
-      case "new":
-        /* gathering is either just starting or has been reset */
-        console.log("new");
-        break;
-      case "gathering":
-        /* gathering has begun or is ongoing */
-        console.log("gathering");
-        break;
-      case "complete":
-        /* gathering has ended */
-        console.log("complete");
-        ws.subscribe({ type: "candidate-call-done", data: { id: remote_id } });
-        break;
-    }
   });
 
   // 获取流媒体信息
@@ -114,16 +119,7 @@ const creatRoom = async () => {
   const streamWithoutAudio = await getLocalMedia({ withAudio: false });
   // 本地播放
   await playonLocal(localVideo, streamWithoutAudio);
-  // 添加流到本地PC - track
-  await addTrackToLocal(pc, stream);
 
-  // 创建offer
-  const OFFER = await _createOffer(pc);
-  // fetch-to-signal-server-with-offer
-  ws.subscribe({
-    type: "switch-answer-with-offer",
-    data: { SDP: OFFER, id: ROOM_ID },
-  });
   // ws.subscribe({ type: "check-room", data: { id: ROOM_ID } });
 };
 

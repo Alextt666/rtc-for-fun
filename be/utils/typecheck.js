@@ -8,24 +8,33 @@ function typecheck(parsedMsg, ws) {
   const { type = "none" } = parsedMsg;
   switch (type) {
     case "init":
-      WS_POOL.set(parsedMsg.id, ws);
-      A_LOG.customer("init-done");
+      {
+        // data: { target: ROOM_ID, id: REMOTE_ID }
+        const { target = "", id } = parsedMsg;
+        WS_POOL.set(parsedMsg.id, ws);
+        console.log("device-online", target);
+        if (target) {
+          const WS_TARGET = WS_POOL.get(target);
+          console.log("remote-online-send-msg");
+          WS_TARGET.send(
+            JSON.stringify({ type: "remote-online", remoteid: id })
+          );
+        }
+        A_LOG.customer("init-done");
+      }
       break;
+    // call-sdp-send
     case "switch-answer-with-offer":
-      WS_SDP_POOL.set(`${parsedMsg.id}-offer-sdp`, parsedMsg.SDP);
-      A_LOG.customer("set-offer-sdp");
-      break;
-    case "fetch-offer":
-      const OFFER_SDP = WS_SDP_POOL.get(`${parsedMsg.target}-offer-sdp`);
-      // 发送OFFER给远端
-      ws.send(
+      const { target, SDP } = parsedMsg;
+      WS_POOL.get(target).send(
         JSON.stringify({
           type: "offer-sdp",
-          SDP: OFFER_SDP,
+          SDP,
         })
       );
-      A_LOG.customer("send-offer-sdp-to-remote");
+      A_LOG.customer("set-offer-sdp");
       break;
+    // remote-sdp-trans
     case "reply-answer":
       {
         const { id, SDP: ANSWER_SDP, remoteId: remoteid } = parsedMsg;
@@ -36,42 +45,20 @@ function typecheck(parsedMsg, ws) {
         A_LOG.customer("answer-reply");
       }
       break;
+    // candidate-trans
     case "candidate-call":
       {
-        const { id: TARGET_ID, candidate: CANDIDATE } = parsedMsg;
-        WS_CANDIDATE_POOL.local.push(CANDIDATE); // 存进local - candidates
+        const { target: TARGET_ID, candidate: CANDIDATE } = parsedMsg;
+        const WS_TARGET = WS_POOL.get(TARGET_ID); // 转发local - candidates
+        console.log('localcandidate',CANDIDATE)
+        WS_TARGET.send(JSON.stringify({ type: "remote-candidate", candidate:CANDIDATE }));
       }
       break;
     case "candidate-remote":
       {
-        const { candidate: CANDIDATE } = parsedMsg;
-        WS_CANDIDATE_POOL.remote.push(CANDIDATE); // 存进remote - candidates
-      }
-      break;
-    case "candidate-call-done":
-      {
-        const { id } = parsedMsg;
-        const WS_TARGET = WS_POOL.get(id);
-        WS_TARGET.send(
-          JSON.stringify({
-            type: "candidate-call-done",
-            candidates: WS_CANDIDATE_POOL.local,
-          })
-        );
-        A_LOG.customer("send-candidate-call-done");
-      }
-      break;
-    case "candidate-remote-done":
-      {
-        const { id } = parsedMsg;
-        const WS_TARGET = WS_POOL.get(id);
-        WS_TARGET.send(
-          JSON.stringify({
-            type: "candidate-remote-done",
-            candidates: WS_CANDIDATE_POOL.remote,
-          })
-        );
-        A_LOG.customer("send-candidate-remote-done");
+        const { target, candidate: CANDIDATE } = parsedMsg;
+        const WS_TARGET = WS_POOL.get(target);
+        WS_TARGET.send(JSON.stringify({ type: "candidate", candidate:CANDIDATE })); // 转发remote - candidates
       }
       break;
     case "check-room":

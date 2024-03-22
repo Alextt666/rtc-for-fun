@@ -31,9 +31,20 @@ const joinRoom = async () => {
   WebSocket.prototype.subscribe = ({ type, data }) => {
     ws.send(JSON.stringify({ type, ...data }));
   };
+
+  // 获取流媒体信息
+  const stream = await getLocalMedia({ withAudio: true });
+  // 没有音频媒体
+  const streamWithoutAudio = await getLocalMedia({ withAudio: false });
+
+  // 本地播放
+  await playonLocal(localVideo, streamWithoutAudio);
+  // 添加流到本地track
+  await addTrackToLocal(pc, stream);
+
   const ws = new WebSocket(`wss://${BASE_URL}`);
   ws.addEventListener("open", async () => {
-    ws.subscribe({ type: "init", data: { id: REMOTE_ID } });
+    ws.subscribe({ type: "init", data: { id: REMOTE_ID, target: ROOM_ID } });
     resolveA();
   });
   ws.addEventListener("message", async (e) => {
@@ -51,12 +62,7 @@ const joinRoom = async () => {
     if (parsedReply.type === "remote-candidate") {
       const CANDIDATE = parsedReply.candidate;
       pc.addIceCandidate(CANDIDATE);
-    }
-    if (parsedReply.type === "candidate-call-done") {
-      console.log(parsedReply.candidates, "candidate-call-done");
-      parsedReply.candidates.forEach((candidate) => {
-        pc.addIceCandidate(candidate);
-      });
+      console.log("local-candidate", CANDIDATE);
     }
   });
 
@@ -77,7 +83,6 @@ const joinRoom = async () => {
   pc.onicecandidate = async (event) => {
     const iceCandidate = event.candidate;
     if (iceCandidate) {
-      console.log(iceCandidate, "remote-candidates");
       ws.subscribe({
         type: "candidate-remote",
         data: {
@@ -104,20 +109,6 @@ const joinRoom = async () => {
         ws.subscribe({ type: "candidate-remote-done", data: { id: ROOM_ID } });
         break;
     }
-  });
-
-  // 获取流媒体信息
-  const stream = await getLocalMedia({ withAudio: true });
-  // 没有音频媒体
-  const streamWithoutAudio = await getLocalMedia({ withAudio: false });
-  // 本地播放
-  await playonLocal(localVideo, streamWithoutAudio);
-  // 添加流到本地track
-  await addTrackToLocal(pc, stream);
-  // GET OFFER
-  await ws.subscribe({
-    type: "fetch-offer",
-    data: { target: ROOM_ID, id: REMOTE_ID },
   });
 };
 
