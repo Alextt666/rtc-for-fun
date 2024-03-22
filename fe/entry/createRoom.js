@@ -13,6 +13,7 @@ const creatRoom = async () => {
   const localVideo = document.getElementById("localVideo");
   const remoteVideo = document.getElementById("remoteVideo");
   const localDiaplay = document.querySelector(".video-box-teacher");
+  const remoteDiaplay = document.querySelector(".video-box-student");
   const localBtn = document.querySelector('#createRoom');
   localBtn.disabled = true;
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
@@ -51,6 +52,7 @@ const creatRoom = async () => {
     if (type === "remote-online") {
       remote_id = parsedReply.remoteid;
       console.log("online- init- peer");
+      remoteDiaplay.style.display = 'block';
       pc = new RTCPeerConnection({
         iceServers: [
           {
