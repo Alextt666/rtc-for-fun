@@ -8,9 +8,13 @@ import { BASE_URL } from "../env/index.js";
 import { iceConfig } from "./iceConfig.js";
 // 发送
 const creatRoom = async () => {
+
   let resolveA;
   const localVideo = document.getElementById("localVideo");
   const remoteVideo = document.getElementById("remoteVideo");
+  const localDiaplay = document.querySelector(".video-box-teacher");
+  const localBtn = document.querySelector('#createRoom');
+  localBtn.disabled = true;
   const ROOM_ID = Math.floor(Math.random() * 1000).toString();
   const room = document.querySelector("#room");
   let pc;
@@ -98,6 +102,7 @@ const creatRoom = async () => {
       });
       // 添加流到本地PC - track
       await addTrackToLocal(pc, stream);
+
       // 创建offer
       const OFFER = await _createOffer(pc);
       // fetch-to-signal-server-with-offer
@@ -119,7 +124,9 @@ const creatRoom = async () => {
   const streamWithoutAudio = await getLocalMedia({ withAudio: false });
   // 本地播放
   await playonLocal(localVideo, streamWithoutAudio);
-
+  // 本地画面
+  localDiaplay.style.display = 'block';
+  localBtn.disabled = false;
   // ws.subscribe({ type: "check-room", data: { id: ROOM_ID } });
 };
 
